@@ -1,0 +1,199 @@
+Script:- twitter API;
+Satuts:- Done.
+url:- http://work.seventhfoundation.com/twitter/
+-----------------
+
+Twitter API Documation:-
+I'ved worked on the Twitter API. In which I have get the Tweets, Friends and Followers from the twitter accound. To get these things I've follow some steps which include below.
+1) Create a twitter account using "https://twitter.com/signup?lang=en" url. 
+2) Create a app using "https://apps.twitter.com/" url.
+3) Then get the the "Consumer Key (API Key)", "Consumer Secret (API Secret)", "Owner" name.
+4) Set the "Permissions" "Read, Write and Access direct messages" for the application access.
+                  =========== Creating php files============= 
+Aftere crating  a twitter app we should need to create some php code to access the required twitter data. 
+To get and post same data from twitter please check the twitter "REST APT" Reference Documentation "https://dev.twitter.com/rest/reference".
+In this scrtipt I've get:-
+1)twitters tweets
+2)Friends List
+3)Followers List
+============================
+In Config.php :- In which I've define (screen_name, Consumer Key, Consumer Secret key) which is we can get from the twitter app.
+In index.php file I've creating a form in which I've create three submit button using html code ("TWEETS", "FRIENDS", "FOLLOWERS"). When the user can click on the anyone button, the value of the button can be submitt using POST method. Where I've use "if (isset($_POST)" method, it can check the value of the form. If the submit form value equel to the  "if (isset($_POST)" value then the condition code can be run. 
+Here I've use 3 "if (isset($_POST)" conditions:-
+1) if (isset($_POST['tweets'])):- if the $_POST value equel to the "tweets" then we run the endpoint url this url contain the twitter account information according the data which is pass the into the url. For get more information of the twiiter account go to the Reference Documentation "https://dev.twitter.com/rest/reference.  To get the tweets of twitter account we can run this url. "'https://api.twitter.com/1.1/statuses/user_timeline.json?screen_name='.$screen_name.'';" . Then we request for the twiiter api token. To get the twitter token we can encode the ""Consumer Key (API Key)", "Consumer Secret (API Secret)"," keys into the base64_encode(), after that we can post this data into a array with ("header", "Content-type", "Content") and store this data into an array, this array data store in "resource id" using the ("stream_context_create()"). After that we can send request for the token "https://api.twitter.com/oauth2/token" url with that variable how can store the "resource id". Now we can get the json encoded api token using file_get_contents(). Decode this json data and get the token in array form, here we can get the token type and access_token for the api. Now we have a access_token for the api. Now we can store this token and method type a array and make a res id using "stream_context_create()". After that using "file_get_contents()" and pass the "api_endpoint url and token array data", we get the final data in the form of jeson data, decode this data using json_decode(). Now we can get the twiiter account data according the endpoint url. 
+----------------
+The same process can be apply all other condition we can just change the endpoint url according the twitter information.
+======================== php Files =============
+1) Config.php
+				<?php
+				$screen_name = 'web_baseline';
+				$key = 'muvD9s8q8FtYQZRP1gJL093Q2';
+				$secret = 'hYGYLKxiGJoezCwoocdrdjImdi9X6Ke37Uq3qV5ASPgBlivJyt';
+				?>
+
+
+---------------------
+2) Index.php
+
+				<!DOCTYPE html>
+				<html>
+				<body>
+				<center>
+				<form action=""  method="POST">
+				<h1>Please Click here to get the twitter details:</h1><br />
+				<input name="tweets" type="submit" value="TWEETS" ></input>
+				<input name="friends" type="submit" value="FRIENDS" ></input>
+				<input name="followers" type="submit" value="FOLLOWERS" ></input>
+				</form>
+				<hr />
+				</center>
+				</body>
+				</html>
+				<?php
+				include 'config.php';
+				//// Tweets-List
+				if (isset($_POST['tweets'])){
+					$api_endpoint = 'https://api.twitter.com/1.1/statuses/user_timeline.json?screen_name='.$screen_name.''; // endpoint must support "Application-only authentication"
+				// request token
+				$basic_credentials = base64_encode($key.':'.$secret);
+				$opts = array('http' =>
+					array(
+						'method'  => 'POST',
+						'header'  =>    'Authorization: Basic '.$basic_credentials."\r\n".
+						"Content-type: application/x-www-form-urlencoded;charset=UTF-8\r\n",
+						'content' => 'grant_type=client_credentials'
+					)
+				);
+
+				$context  = stream_context_create($opts);
+
+				// send request
+				$pre_token = file_get_contents('https://api.twitter.com/oauth2/token', false, $context);
+
+				$token = json_decode($pre_token, true);
+
+				if (isset($token["token_type"]) && $token["token_type"] == "bearer"){
+					$opts = array('http' =>
+						array(
+							'method'  => 'GET',
+							'header'  => 'Authorization: Bearer '.$token["access_token"]       
+						)
+					);
+
+					$context  = stream_context_create($opts);
+
+					$data = file_get_contents($api_endpoint, false, $context);
+					$final = json_decode($data,true);
+					
+					$final_1 = array ($final);
+					$tweets = $final_1; 
+					}
+					foreach($tweets as $response){
+				foreach($response as $resp){
+					echo "<h2><center>"."Tweets_ID:-"."&nbsp;&nbsp;&nbsp;" .$text=$resp['id']."</center></h2>";
+					echo "<br />";
+					echo "<h3><center>"."Tweets:-"."&nbsp;&nbsp;&nbsp;" .$text=$resp['text']."</center></h3>" ;
+					echo "<br><center><hr></center>";
+				}
+				}
+				}
+				
+				//// Friends-list///
+				if (isset($_POST['friends'])){	
+				$api_endpoint = 'https://api.twitter.com/1.1/friends/list.json?cursor=-1&screen_name='.$screen_name.'&skip_status=true&include_user_entities=false';
+				// request token
+				$basic_credentials = base64_encode($key.':'.$secret);
+				$opts = array('http' =>
+					array(
+						'method'  => 'POST',
+						'header'  => 'Authorization: Basic '.$basic_credentials."\r\n".
+						"Content-type: application/x-www-form-urlencoded;charset=UTF-8\r\n",
+						'content' => 'grant_type=client_credentials'
+					)
+				);
+				$context  = stream_context_create($opts);
+				// send request
+				$pre_token = file_get_contents('https://api.twitter.com/oauth2/token', false, $context);
+				$token = json_decode($pre_token, true);
+				if (isset($token["token_type"]) && $token["token_type"] == "bearer"){
+					$opts = array('http' =>
+						array(
+							'method'  => 'GET',
+							'header'  => 'Authorization: Bearer '.$token["access_token"]       
+						)
+					);
+
+					$context  = stream_context_create($opts);
+					$data = file_get_contents($api_endpoint, false, $context);
+					$final = json_decode($data,true);
+					
+					$final_1 = array ($final);
+					$friend_list = $final_1['0']['users'];
+					}
+					?>
+					<center>
+					<h1> Friend List</h1>
+					<table>
+					<tr>
+				<th>User ID</th>&nbsp;&nbsp;
+				<th>User Name</th>
+				</tr>
+					<?php
+					foreach($friend_list as $response){
+					$use_id=$response['id'];
+					$name=$response['name'];
+				  ?>
+				<tr><td>&nbsp;&nbsp;&nbsp;<?php echo $use_id;?></td>
+				<td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<?php echo $name;?></td></tr>
+				  <?php
+
+					}
+					?>
+				</table>
+				</center>
+				<?php
+				}
+				////Followers-list////
+				if (isset($_POST['followers'])){	
+				$api_endpoint = 'https://api.twitter.com/1.1/followers/list.json?cursor=-1&screen_name='.$screen_name.'&skip_status=true&include_user_entities=false';
+				// request token
+				$basic_credentials = base64_encode($key.':'.$secret);
+				$opts = array('http' =>
+					array(
+						'method'  => 'POST',
+						'header'  =>    'Authorization: Basic '.$basic_credentials."\r\n".
+						"Content-type: application/x-www-form-urlencoded;charset=UTF-8\r\n",
+						'content' => 'grant_type=client_credentials'
+					)
+				);
+
+				$context  = stream_context_create($opts);
+
+				// send request
+				$pre_token = file_get_contents('https://api.twitter.com/oauth2/token', false, $context);
+
+				$token = json_decode($pre_token, true);
+
+				if (isset($token["token_type"]) && $token["token_type"] == "bearer"){
+					$opts = array('http' =>
+						array(
+							'method'  => 'GET',
+							'header'  => 'Authorization: Bearer '.$token["access_token"]       
+						)
+					);
+
+					$context  = stream_context_create($opts);
+
+					$data = file_get_contents($api_endpoint, false, $context);
+					$final = json_decode($data,true);
+					
+					$final_1 = array ($final);
+					$followers = $final_1['0']['users'];
+				}
+				foreach($followers as $response){
+					echo "<h2><center>"."Followers:-"."&nbsp;&nbsp;&nbsp;" .$text=$response['name']."</center>";
+					echo "<br /><hr />";
+				}
+				}
+				?>
+				
