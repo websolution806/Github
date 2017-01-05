@@ -1,9 +1,5 @@
 <!DOCTYPE html>
-<html>
-
-
-	
-	
+<html>	
 <body>
 <center>
 <form action=""  method="POST">
